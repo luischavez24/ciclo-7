@@ -1,0 +1,11 @@
+INFO Thread-2 com.guis.singleton.threadsafe.ThreadSafeSingleton - Se ha creado el singleton: Thread-2
+INFO Thread-2 com.guis.singleton.threadsafe.ThreadSafeTest - HILO: Thread-2, com.guis.singleton.threadsafe.ThreadSafeSingleton@447661be
+INFO Thread-8 com.guis.singleton.threadsafe.ThreadSafeTest - HILO: Thread-8, com.guis.singleton.threadsafe.ThreadSafeSingleton@447661be
+INFO Thread-9 com.guis.singleton.threadsafe.ThreadSafeTest - HILO: Thread-9, com.guis.singleton.threadsafe.ThreadSafeSingleton@447661be
+INFO Thread-4 com.guis.singleton.threadsafe.ThreadSafeTest - HILO: Thread-4, com.guis.singleton.threadsafe.ThreadSafeSingleton@447661be
+INFO Thread-5 com.guis.singleton.threadsafe.ThreadSafeTest - HILO: Thread-5, com.guis.singleton.threadsafe.ThreadSafeSingleton@447661be
+INFO Thread-7 com.guis.singleton.threadsafe.ThreadSafeTest - HILO: Thread-7, com.guis.singleton.threadsafe.ThreadSafeSingleton@447661be
+INFO Thread-0 com.guis.singleton.threadsafe.ThreadSafeTest - HILO: Thread-0, com.guis.singleton.threadsafe.ThreadSafeSingleton@447661be
+INFO Thread-3 com.guis.singleton.threadsafe.ThreadSafeTest - HILO: Thread-3, com.guis.singleton.threadsafe.ThreadSafeSingleton@447661be
+INFO Thread-1 com.guis.singleton.threadsafe.ThreadSafeTest - HILO: Thread-1, com.guis.singleton.threadsafe.ThreadSafeSingleton@447661be
+INFO Thread-6 com.guis.singleton.threadsafe.ThreadSafeTest - HILO: Thread-6, com.guis.singleton.threadsafe.ThreadSafeSingleton@447661be

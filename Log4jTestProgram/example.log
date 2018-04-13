@@ -1,0 +1,29 @@
+DEBUG main com.guis.log4j.test.Log4jTest - This a debug message
+INFO main com.guis.log4j.test.Log4jTest - This is a info message
+WARN main com.guis.log4j.test.Log4jTest - This is a warning
+ERROR main com.guis.log4j.test.Log4jTest - This is a error message
+FATAL main com.guis.log4j.test.Log4jTest - This is fatal message
+DEBUG main com.guis.log4j.test.Log4jTest - This a debug message
+INFO main com.guis.log4j.test.Log4jTest - This is a info message
+WARN main com.guis.log4j.test.Log4jTest - This is a warning
+ERROR main com.guis.log4j.test.Log4jTest - This is a error message
+FATAL main com.guis.log4j.test.Log4jTest - This is fatal message
+WARN main com.guis.log4j.test.Log4jTest - This is a warning
+ERROR main com.guis.log4j.test.Log4jTest - This is a error message
+FATAL main com.guis.log4j.test.Log4jTest - This is fatal message
+INFO main com.guis.log4j.test.Log4jTest - This is a info message
+WARN main com.guis.log4j.test.Log4jTest - This is a warning
+ERROR main com.guis.log4j.test.Log4jTest - This is a error message
+FATAL main com.guis.log4j.test.Log4jTest - This is fatal message
+FATAL main com.guis.log4j.test.Log4jTest - This is fatal message
+DEBUG main com.guis.log4j.test.Log4jTest - This a debug message
+INFO main com.guis.log4j.test.Log4jTest - This is a info message
+WARN main com.guis.log4j.test.Log4jTest - This is a warning
+ERROR main com.guis.log4j.test.Log4jTest - This is a error message
+FATAL main com.guis.log4j.test.Log4jTest - This is fatal message
+DEBUG main com.guis.log4j.test.Log4jTest - This is a debug message
+INFO main com.guis.log4j.test.Log4jTest - This is a info message
+WARN main com.guis.log4j.test.Log4jTest - This is a warning
+ERROR main com.guis.log4j.test.Log4jTest - This is a error message
+FATAL main com.guis.log4j.test.Log4jTest - This is fatal message
+FATAL main com.guis.log4j.test.Log4jTest - This is fatal message
