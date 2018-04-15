@@ -17,92 +17,132 @@ import com.guis.clienteftp.interfaces.Observer;
 import com.guis.clienteftp.interfaces.Subject;
 
 /**
+ * Esta es la clase FTPFileDownload, se encarga de la descarga de un archivo
+ * mediante el protocolo FTP. Implementa la clase Subject que le perimite ser
+ * observada. Esto para que podamos monitorear el proceso de descarga del
+ * archivo
  * 
  * @author guis
  */
-public class FtpFileDownload implements Subject{
+public class FtpFileDownload implements Subject {
 
+	// Variable que almacena a los observadores
 	private List<Observer> observadores;
+	// Almacena el porcentaje de la descarga
 	private double porcentaje;
-	
-    static final String SERVIDOR = "www.peru-software.com";
-    static final int PUERTO = 21;
-    static final String USUARIO = "pp20172@peru-software.com";
-    static final String CLAVE = "fisi20172";
 
-    static FTPClient ftp = new FTPClient();
-    
-    public FtpFileDownload() {
-    	this.porcentaje = 0.0;
-    	this.observadores = new ArrayList<>();
-    }
-    
-    public void download(String nombreRemoto, String nombreLocal) {
+	// Constantes del servidor FTP
+	private static final String SERVIDOR = "www.peru-software.com";
+	private static final int PUERTO = 21;
+	private static final String USUARIO = "pp20172@peru-software.com";
+	private static final String CLAVE = "fisi20172";
 
-        try {
-        	
-            // Conectando al servidor
-            ftp.connect(SERVIDOR, PUERTO);
-            // Iniciando sesion
-            ftp.login(USUARIO, CLAVE);
+	// FTPClient de apache-commons-net
+	private static FTPClient ftp = new FTPClient();
 
-            ftp.enterLocalPassiveMode();
+	/**
+	 * Constructor que inicializa el procentaje y la lista de observadores
+	 */
+	public FtpFileDownload() {
+		this.porcentaje = 0.0;
+		this.observadores = new ArrayList<>();
+	}
 
-            FTPFile[] archivosDirectorio = ftp.listFiles(nombreRemoto);
-      
-            if (archivosDirectorio.length == 1) {
-                
-                FTPFile archivoDescargando = archivosDirectorio[0];
-                
-                long sizeArchivo = archivoDescargando.getSize();
-                
-                ftp.setFileType(FTP.BINARY_FILE_TYPE);
-                
-                try (OutputStream outputStream2 = new BufferedOutputStream(new FileOutputStream(nombreLocal));
-                	 InputStream inputStream = ftp.retrieveFileStream(nombreRemoto)) {
-                
-                	byte[] buffer = new byte[4096];
+	/**
+	 * Este metodo permite descargar un archivo en un servidor FTP
+	 * 
+	 * @param nombreRemoto
+	 *            Nombre del archivo que se desea descargar
+	 * @param nombreLocal
+	 *            Nombre que se le asignara al archivo al momento de descargarlo
+	 */
+	public void download(String nombreRemoto, String nombreLocal) {
 
-                    int byteRead = -1, totalActual = 0;
-                    
-                    while ((byteRead = inputStream.read(buffer)) != -1) {
-                        
-                        outputStream2.write(buffer, 0, byteRead);
-                        
-                        totalActual += byteRead;
-                        
-                        porcentaje = (totalActual * 1.0 ) / sizeArchivo * 100;
-                        
-                        notifyObservers();
+		try {
+			
+			// Para que si no encuentra el archivo 
+			// que mande descarga fallida tambien
+			boolean exito = false;
+			// Conectando al servidor
+			ftp.connect(SERVIDOR, PUERTO);
+			// Iniciando sesion
+			ftp.login(USUARIO, CLAVE);
+			// Entramos a modo pasivo para evitar problemas con el
+			// firewall
+			ftp.enterLocalPassiveMode();
 
-                    }
+			// Obtenemos toda la lista de los archivos en el servidor con el
+			// nombre remoto
+			FTPFile[] archivosDirectorio = ftp.listFiles(nombreRemoto);
 
-                    boolean exito = ftp.completePendingCommand();
-                    
-                    Logger.getLogger(FtpFileDownload.class.getName()).log(Level.INFO, exito ? "Descarga exitosa" : "Descaga fallida");
-                    
-                }
+			// Si el tamaño del arreglo es menor a 1 entonces existes el archivo
+			if (archivosDirectorio.length == 1) {
 
-            } else {
-                System.out.println("ERROR");
-            }
+				// Recuperamos el archivo descargado
+				FTPFile archivoDescargando = archivosDirectorio[0];
 
-        } catch (IOException ex) {
-        	
-            Logger.getLogger(FtpFileDownload.class.getName()).log(Level.SEVERE, null, ex);
-            
-        } finally {
-            if (ftp.isConnected()) {
-                try {
-                    ftp.logout();
-                    ftp.disconnect();
-                } catch (IOException ex) {
-                    Logger.getLogger(FtpFileDownload.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        }
+				// Recuperamos su longitud
+				long sizeArchivo = archivoDescargando.getSize();
 
-    }
+				// Establecemos el tipo de archivo en binario
+				ftp.setFileType(FTP.BINARY_FILE_TYPE);
+
+				// Esta parte la cambie un poco
+				// Use el try-resources para que ambos objetos se cierren al final de
+				// de la descarga, se pueden poner varios elementos en el try-resources
+				// primero el OutputStream y luego el InputStream por el este necesita
+				// al otro
+
+				try (OutputStream outputStream2 = new BufferedOutputStream(new FileOutputStream(nombreLocal));
+						InputStream inputStream = ftp.retrieveFileStream(nombreRemoto)) {
+
+					// Buffer de descarga
+					byte[] buffer = new byte[4096];
+
+					// Cantidad de bytes leidos en cada ciclo
+					// Total actual acumulado de bytes descargados
+					int byteRead = -1, totalActual = 0;
+
+					while ((byteRead = inputStream.read(buffer)) != -1) {
+
+						// Escribimos el flujo en el archivo de la maquina cliente
+						outputStream2.write(buffer, 0, byteRead);
+
+						// Incrementamos el total de bytes acumulados
+						totalActual += byteRead;
+
+						// Calculamos el porcentaje
+						porcentaje = (totalActual * 1.0) / sizeArchivo * 100;
+
+						// Y notificamos al observer
+						notifyObservers();
+
+					}
+
+					exito = ftp.completePendingCommand();
+
+				}
+			}
+		
+			// Este mensaje ya iria despues y si no hay el archivo botara descarga fallida
+			Logger.getLogger(FtpFileDownload.class.getName()).log(Level.INFO,
+					exito ? "Descarga exitosa" : "Descaga fallida");
+		} catch (IOException ex) {
+
+			Logger.getLogger(FtpFileDownload.class.getName()).log(Level.SEVERE, null, ex);
+
+		} finally {
+			if (ftp.isConnected()) {
+				try {
+					ftp.logout();
+					ftp.disconnect();
+				} catch (IOException ex) {
+					Logger.getLogger(FtpFileDownload.class.getName()).log(Level.SEVERE, null, ex);
+				}
+			}
+		}
+
+	}
 
 	@Override
 	public void addObserver(Observer o) {
@@ -116,7 +156,7 @@ public class FtpFileDownload implements Subject{
 
 	@Override
 	public void notifyObservers() {
-		observadores.forEach( obs -> obs.update(this));
+		observadores.forEach(obs -> obs.update(this));
 	}
 
 	public double getPorcentaje() {

@@ -89,6 +89,7 @@ public class FtpFileTest {
 
                 boolean exito2 = ftp.completePendingCommand();
                 Logger.getLogger(FtpFileDownload.class.getName()).log(Level.INFO, exito2 ? "Descarga exitosa" : "Descaga fallida");
+                // con este try ya no va esto
                 outputStream2.close();
                 inputStream.close();
             } else {
