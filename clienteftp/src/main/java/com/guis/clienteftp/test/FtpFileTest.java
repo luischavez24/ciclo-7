@@ -67,6 +67,8 @@ public class FtpFileTest {
                 ftp.setFileType(FTP.BINARY_FILE_TYPE);
                 OutputStream outputStream2 = new BufferedOutputStream(new FileOutputStream(archivoLocal2));
                 InputStream inputStream = ftp.retrieveFileStream(archivoRemoto2);
+                
+                
                 byte[] archivoEnBytes = new byte[4096];
 
                 int byteRead = -1;
@@ -92,6 +94,7 @@ public class FtpFileTest {
                 // con este try ya no va esto
                 outputStream2.close();
                 inputStream.close();
+                
             } else {
                 System.out.println("ERROR");
             }

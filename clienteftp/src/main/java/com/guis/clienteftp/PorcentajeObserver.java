@@ -17,7 +17,7 @@ public class PorcentajeObserver implements Observer{
 	@Override
 	public void update(Subject o) {
 		if(o == ftpFileDownload) {
-			System.out.printf("Porcentaje %.1f %% \n", ftpFileDownload.getPorcentaje());
+			System.out.printf("%s => %.1f %% \n", ftpFileDownload.file.getName() , ftpFileDownload.getPorcentaje());
 		}
 	}
 

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
@@ -24,123 +25,105 @@ import com.guis.clienteftp.interfaces.Subject;
  * 
  * @author guis
  */
-public class FtpFileDownload implements Subject {
+public class FtpFileDownload  extends Thread implements Subject {
 
 	// Variable que almacena a los observadores
 	private List<Observer> observadores;
+
+	public FTPFile file;
+	
+	private String nombreArchivo;
+	
 	// Almacena el porcentaje de la descarga
 	private double porcentaje;
 
-	// Constantes del servidor FTP
-	private static final String SERVIDOR = "www.peru-software.com";
-	private static final int PUERTO = 21;
-	private static final String USUARIO = "pp20172@peru-software.com";
-	private static final String CLAVE = "fisi20172";
-
-	// FTPClient de apache-commons-net
-	private static FTPClient ftp = new FTPClient();
-
 	/**
 	 * Constructor que inicializa el procentaje y la lista de observadores
-	 */
-	public FtpFileDownload() {
-		this.porcentaje = 0.0;
-		this.observadores = new ArrayList<>();
-	}
-
-	/**
-	 * Este metodo permite descargar un archivo en un servidor FTP
 	 * 
 	 * @param nombreRemoto
 	 *            Nombre del archivo que se desea descargar
 	 * @param nombreLocal
 	 *            Nombre que se le asignara al archivo al momento de descargarlo
 	 */
-	public void download(String nombreRemoto, String nombreLocal) {
-
+	
+	public FtpFileDownload(FTPFile file) {
+		super(file.getName());
+		this.file = file;
+		this.nombreArchivo = file.getName();
+		this.porcentaje = 0.0;
+		this.observadores = new ArrayList<>();
+	}
+	
+	public FtpFileDownload(FTPFile file, String nombreArchivo) {
+		super(file.getName());
+		this.file = file;
+		this.nombreArchivo = nombreArchivo;
+		this.porcentaje = 0.0;
+		this.observadores = new ArrayList<>();
+	}
+	
+	@Override
+	public void run() {
 		try {
-			
-			// Para que si no encuentra el archivo 
-			// que mande descarga fallida tambien
-			boolean exito = false;
-			// Conectando al servidor
-			ftp.connect(SERVIDOR, PUERTO);
-			// Iniciando sesion
-			ftp.login(USUARIO, CLAVE);
-			// Entramos a modo pasivo para evitar problemas con el
-			// firewall
-			ftp.enterLocalPassiveMode();
+			new PorcentajeObserver(this);
+			download();
+		} catch (IOException | InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
 
-			// Obtenemos toda la lista de los archivos en el servidor con el
-			// nombre remoto
-			FTPFile[] archivosDirectorio = ftp.listFiles(nombreRemoto);
+	/**
+	 * Este metodo permite descargar un archivo en un servidor FTP
+	 * @throws InterruptedException 
+	 */
+	public void download() throws IOException, InterruptedException {
+		FTPClient ftp = ConexionFTP.getFTP().getClient();
+		// Para que si no encuentra el archivo
+		// que mande descarga fallida tambien
+		boolean exito = false;
 
-			// Si el tamaño del arreglo es menor a 1 entonces existes el archivo
-			if (archivosDirectorio.length == 1) {
+		long sizeArchivo = file.getSize();
+		
+		// Si el tamaño del arreglo es menor a 1 entonces existes el archivo
+		if (file.isFile() && !file.getName().equals(".ftpquota")) {	
 
-				// Recuperamos el archivo descargado
-				FTPFile archivoDescargando = archivosDirectorio[0];
+			try (InputStream inputStream  = ftp.retrieveFileStream(file.getName());
+				 OutputStream outputStream2 = new BufferedOutputStream(new FileOutputStream(nombreArchivo))) {
 
-				// Recuperamos su longitud
-				long sizeArchivo = archivoDescargando.getSize();
+				// Buffer de descarga
+				byte[] buffer = new byte[4096];
 
-				// Establecemos el tipo de archivo en binario
-				ftp.setFileType(FTP.BINARY_FILE_TYPE);
+				// Cantidad de bytes leidos en cada ciclo
+				// Total actual acumulado de bytes descargados
+				int byteRead = -1, totalActual = 0;
 
-				// Esta parte la cambie un poco
-				// Use el try-resources para que ambos objetos se cierren al final de
-				// de la descarga, se pueden poner varios elementos en el try-resources
-				// primero el OutputStream y luego el InputStream por el este necesita
-				// al otro
+				while ((byteRead = inputStream.read(buffer)) != -1) {
 
-				try (OutputStream outputStream2 = new BufferedOutputStream(new FileOutputStream(nombreLocal));
-						InputStream inputStream = ftp.retrieveFileStream(nombreRemoto)) {
+					// Escribimos el flujo en el archivo de la maquina cliente
+					outputStream2.write(buffer, 0, byteRead);
 
-					// Buffer de descarga
-					byte[] buffer = new byte[4096];
+					// Incrementamos el total de bytes acumulados
+					totalActual += byteRead;
 
-					// Cantidad de bytes leidos en cada ciclo
-					// Total actual acumulado de bytes descargados
-					int byteRead = -1, totalActual = 0;
+					// Calculamos el porcentaje
+					porcentaje = (totalActual * 1.0) / sizeArchivo * 100;
 
-					while ((byteRead = inputStream.read(buffer)) != -1) {
-
-						// Escribimos el flujo en el archivo de la maquina cliente
-						outputStream2.write(buffer, 0, byteRead);
-
-						// Incrementamos el total de bytes acumulados
-						totalActual += byteRead;
-
-						// Calculamos el porcentaje
-						porcentaje = (totalActual * 1.0) / sizeArchivo * 100;
-
-						// Y notificamos al observer
-						notifyObservers();
-
-					}
-
-					exito = ftp.completePendingCommand();
+					// Y notificamos al observer
+					notifyObservers();
 
 				}
+
+				exito = ftp.completePendingCommand();
+
 			}
-		
+			
 			// Este mensaje ya iria despues y si no hay el archivo botara descarga fallida
 			Logger.getLogger(FtpFileDownload.class.getName()).log(Level.INFO,
-					exito ? "Descarga exitosa" : "Descaga fallida");
-		} catch (IOException ex) {
-
-			Logger.getLogger(FtpFileDownload.class.getName()).log(Level.SEVERE, null, ex);
-
-		} finally {
-			if (ftp.isConnected()) {
-				try {
-					ftp.logout();
-					ftp.disconnect();
-				} catch (IOException ex) {
-					Logger.getLogger(FtpFileDownload.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
+					(exito ? "Descarga exitosa - " : "Descaga fallida - ") + file.getName());
 		}
+		
+		ConexionFTP.getFTP().closeClient(ftp);
+		
 
 	}
 
