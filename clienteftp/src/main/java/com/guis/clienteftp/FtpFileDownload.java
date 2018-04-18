@@ -7,13 +7,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 
+import com.guis.clienteftp.constants.DownloadState;
 import com.guis.clienteftp.interfaces.Observer;
 import com.guis.clienteftp.interfaces.Subject;
 
@@ -26,17 +24,20 @@ import com.guis.clienteftp.interfaces.Subject;
  * @author guis
  */
 public class FtpFileDownload  extends Thread implements Subject {
-
+	
 	// Variable que almacena a los observadores
-	private List<Observer> observadores;
-
-	public FTPFile file;
+	private final List<Observer> observadores;
+	
+	private FTPFile file;
 	
 	private String nombreArchivo;
 	
 	// Almacena el porcentaje de la descarga
 	private double porcentaje;
 
+	private DownloadState estado;
+	
+	
 	/**
 	 * Constructor que inicializa el procentaje y la lista de observadores
 	 * 
@@ -52,6 +53,7 @@ public class FtpFileDownload  extends Thread implements Subject {
 		this.nombreArchivo = file.getName();
 		this.porcentaje = 0.0;
 		this.observadores = new ArrayList<>();
+		this.estado = DownloadState.INICIANDOSE; // *
 	}
 	
 	public FtpFileDownload(FTPFile file, String nombreArchivo) {
@@ -60,12 +62,26 @@ public class FtpFileDownload  extends Thread implements Subject {
 		this.nombreArchivo = nombreArchivo;
 		this.porcentaje = 0.0;
 		this.observadores = new ArrayList<>();
+		this.estado = DownloadState.INICIANDOSE; // *
 	}
 	
+	
+	public FTPFile getFile() {
+		return file;
+	}
+
+	public String getNombreArchivo() {
+		return nombreArchivo;
+	}
+
+	public DownloadState getEstado() {
+		return estado;
+	}
+
+
 	@Override
 	public void run() {
 		try {
-			new PorcentajeObserver(this);
 			download();
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
@@ -77,9 +93,13 @@ public class FtpFileDownload  extends Thread implements Subject {
 	 * @throws InterruptedException 
 	 */
 	public void download() throws IOException, InterruptedException {
+		
+		notifyObservers();
+		
 		FTPClient ftp = ConexionFTP.getFTP().getClient();
 		// Para que si no encuentra el archivo
 		// que mande descarga fallida tambien
+		
 		boolean exito = false;
 
 		long sizeArchivo = file.getSize();
@@ -97,6 +117,8 @@ public class FtpFileDownload  extends Thread implements Subject {
 				// Total actual acumulado de bytes descargados
 				int byteRead = -1, totalActual = 0;
 
+				estado = DownloadState.DESCARGANDO; // *
+				
 				while ((byteRead = inputStream.read(buffer)) != -1) {
 
 					// Escribimos el flujo en el archivo de la maquina cliente
@@ -117,14 +139,12 @@ public class FtpFileDownload  extends Thread implements Subject {
 
 			}
 			
-			// Este mensaje ya iria despues y si no hay el archivo botara descarga fallida
-			Logger.getLogger(FtpFileDownload.class.getName()).log(Level.INFO,
-					(exito ? "Descarga exitosa - " : "Descaga fallida - ") + file.getName());
+			estado = exito ? DownloadState.EXITO : DownloadState.ERROR; // *
+
+			notifyObservers();
 		}
 		
 		ConexionFTP.getFTP().closeClient(ftp);
-		
-
 	}
 
 	@Override
